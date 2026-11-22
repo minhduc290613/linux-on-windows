@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Linux on Windows — WSL2 &amp; Distro Manager</title>
+
+  <!-- Google Fonts: Inter + Noto Sans JP + Noto Sans Lao -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+Lao:wght@400;500;600;700&display=swap"/>
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Inter", "Noto Sans JP", "Noto Sans Lao", "sans-serif"],
+            jp: ["Noto Sans JP", "Inter", "sans-serif"],
+            lao: ["Noto Sans Lao", "Inter", "sans-serif"],
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body>
+  <!-- Ambient Light Liquid Glass Background -->
+  <div class="liquid-stage" aria-hidden="true">
+    <div class="liquid-blob blob-1"></div>
+    <div class="liquid-blob blob-2"></div>
+    <div class="liquid-blob blob-3"></div>
+  </div>
+
+  <!-- Top Navigation Bar -->
+  <header class="sticky top-0 z-40 px-4 sm:px-6 pt-4">
+    <nav class="max-w-6xl mx-auto liquid-glass rounded-2xl px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <!-- Brand Logo + Name -->
+      <a href="#" class="flex items-center gap-3 group">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 border border-white shadow-md">
+          <!-- Custom SVG Logo for Linux on Windows -->
+          <svg class="w-6 h-6 text-white transition-transform duration-300 group-hover:scale-105" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="4" width="26" height="24" rx="6" stroke="currentColor" stroke-width="2" />
+            <path d="M9.5 12L14 16L9.5 20" stroke="#a5f3fc" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M16.5 20H22.5" stroke="#a7f3d0" stroke-width="2.2" stroke-linecap="round" />
+            <circle cx="24" cy="8.5" r="2" fill="#f9a8d4" />
+          </svg>
+        </div>
+        <div>
+          <div class="font-bold text-sm sm:text-base tracking-tight text-slate-900 flex items-center gap-2">
+            <span>Linux on Windows</span>
+            <span class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200/80">PS1</span>
+          </div>
+          <p data-i18n="nav_tagline" class="text-[11px] text-slate-500 hidden sm:block">WSL2 &amp; Distro Manager</p>
+        </div>
+      </a>
+
+      <!-- Section Links -->
+      <div class="hidden md:flex items-center gap-6 text-xs sm:text-sm font-medium text-slate-600">
+        <a href="#install-cmd" data-i18n="nav_install" class="hover:text-blue-600 transition">Cài đặt</a>
+        <a href="#workflows" data-i18n="nav_workflows" class="hover:text-blue-600 transition">Auto &amp; Custom</a>
+        <a href="#removal" data-i18n="nav_removal" class="hover:text-blue-600 transition">Gỡ bỏ sạch</a>
+        <a href="#walkthrough" data-i18n="nav_walkthrough" class="hover:text-blue-600 transition">Hướng dẫn</a>
+      </div>
+
+      <!-- Multi-Language Switcher (VN, EN, JP, LAO) -->
+      <div class="flex items-center gap-1 p-1 rounded-xl bg-slate-900/[0.04] border border-slate-200/80" role="group" aria-label="Language Switcher">
+        <button data-lang="vn" class="lang-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition">VN</button>
+        <button data-lang="en" class="lang-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition">EN</button>
+        <button data-lang="jp" class="lang-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition">JP</button>
+        <button data-lang="lo" class="lang-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition">LAO</button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-16 space-y-16 sm:space-y-24">
+    <!-- Hero Section -->
+    <section class="text-center space-y-6 reveal is-visible">
+      <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full liquid-glass text-xs font-semibold text-emerald-700">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 status-pulse"></span>
+        <span data-i18n="hero_badge">Tự động xin quyền Admin khi chạy ở PowerShell thường</span>
+      </div>
+
+      <div class="flex justify-center">
+        <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl liquid-glass flex items-center justify-center">
+          <svg class="w-12 h-12 sm:w-14 sm:h-14" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="logoGrad" x1="6" y1="6" x2="42" y2="42" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#2563eb" />
+                <stop offset="50%" stop-color="#7c3aed" />
+                <stop offset="100%" stop-color="#db2777" />
+              </linearGradient>
+            </defs>
+            <rect x="6" y="7" width="36" height="34" rx="10" stroke="url(#logoGrad)" stroke-width="2.6" />
+            <path d="M15 18L22 24L15 30" stroke="#0284c7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+            <line x1="25" y1="30" x2="34" y2="30" stroke="#059669" stroke-width="3" stroke-linecap="round" />
+            <circle cx="35" cy="14" r="3" fill="#ec4899" />
+          </svg>
+        </div>
+      </div>
+
+      <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight leading-tight">
+        <span class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          Linux on Windows
+        </span>
+      </h1>
+
+      <p data-i18n="hero_subtitle" class="max-w-2xl mx-auto text-sm sm:text-lg text-slate-600 leading-relaxed">
+        Script PowerShell (.ps1) trực quan giúp cài đặt WSL2, chọn bản phân phối Linux, chạy từng bước có hướng dẫn hoặc gỡ bỏ triệt để chỉ qua lệnh iex.
+      </p>
+
+      <!-- One-Click IEX Command Box -->
+      <div id="install-cmd" class="max-w-2xl mx-auto pt-2">
+        <div class="liquid-glass p-4 sm:p-5 rounded-2xl text-left space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <span data-i18n="cmd_label" class="text-xs font-semibold uppercase tracking-wider text-blue-600">
+              Chạy trực tiếp qua PowerShell (iex)
+            </span>
+            <span id="copyFeedback" class="text-xs font-semibold text-emerald-600 opacity-0 transition-opacity duration-200">
+              Đã sao chép!
+            </span>
+          </div>
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-900/[0.04] border border-slate-200/90 rounded-xl px-4 py-3">
+            <code id="iexCommandText" class="font-mono text-xs sm:text-sm text-slate-800 font-medium break-all select-all">
+              irm https://wsl.tino.io.vn/linux.ps1 | iex
+            </code>
+            <button
+              id="copyCmdBtn"
+              type="button"
+              class="liquid-btn shrink-0 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-sm cursor-pointer"
+            >
+              <span data-i18n="copy_btn">Sao chép</span>
+            </button>
+          </div>
+          <p data-i18n="cmd_note" class="text-xs text-slate-500">
+            Nếu mở ở PowerShell thường (User), script tự động hỏi và nâng quyền Administrator trước khi thực thi.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Core Capabilities Grid -->
+    <section id="workflows" class="space-y-6 reveal">
+      <div class="text-center max-w-2xl mx-auto space-y-2">
+        <h2 data-i18n="sec_workflows_title" class="text-2xl sm:text-3xl font-bold text-slate-900">
+          Cài đặt Auto &amp; Custom linh hoạt
+        </h2>
+        <p data-i18n="sec_workflows_desc" class="text-sm text-slate-600">
+          Chọn bản Distro mong muốn, cài nhanh một chạm hoặc đi từng bước rõ ràng với nhật ký trực tiếp.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Card 1: Distro Selector -->
+        <div class="liquid-glass liquid-glass-interactive p-6 space-y-3">
+          <div class="w-11 h-11 rounded-2xl bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600 font-bold text-lg">
+            01
+          </div>
+          <h3 data-i18n="card_distro_title" class="text-lg font-bold text-slate-900">Chọn Distro &amp; Tải Online</h3>
+          <p data-i18n="card_distro_desc" class="text-sm text-slate-600 leading-relaxed">
+            Hỗ trợ Ubuntu, Ubuntu-24.04, Ubuntu-22.04, Debian, Kali Linux, openSUSE hoặc tự nhập tên Distro bất kỳ và đồng bộ danh sách trực tuyến.
+          </p>
+        </div>
+
+        <!-- Card 2: Auto Install -->
+        <div class="liquid-glass liquid-glass-interactive p-6 space-y-3">
+          <div class="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-200/80 flex items-center justify-center text-emerald-600 font-bold text-lg">
+            02
+          </div>
+          <h3 data-i18n="card_auto_title" class="text-lg font-bold text-slate-900">Cài đặt Auto (1-Click)</h3>
+          <p data-i18n="card_auto_desc" class="text-sm text-slate-600 leading-relaxed">
+            Tự động bật Virtual Machine Platform &amp; WSL, cập nhật kernel WSL2, đặt mặc định WSL 2 và cài đặt bản Distro đã chọn.
+          </p>
+        </div>
+
+        <!-- Card 3: Custom Step-by-Step -->
+        <div class="liquid-glass liquid-glass-interactive p-6 space-y-3">
+          <div class="w-11 h-11 rounded-2xl bg-amber-50 border border-amber-200/80 flex items-center justify-center text-amber-600 font-bold text-lg">
+            03
+          </div>
+          <h3 data-i18n="card_custom_title" class="text-lg font-bold text-slate-900">Cài Custom từng bước</h3>
+          <p data-i18n="card_custom_desc" class="text-sm text-slate-600 leading-relaxed">
+            Chạy từng bước có hướng dẫn trực quan, dễ kiểm soát lỗi ảo hóa BIOS/UEFI hoặc lỗi mạng khi tải từng thành phần.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Full Removal & Deep Cleanup Section -->
+    <section id="removal" class="space-y-6 reveal">
+      <div class="liquid-glass p-6 sm:p-8 space-y-6">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200/80 pb-5">
+          <div class="space-y-1.5">
+            <span data-i18n="rem_badge" class="text-xs font-semibold uppercase tracking-wider text-rose-600">
+              Deep Clean Engine
+            </span>
+            <h2 data-i18n="rem_title" class="text-2xl sm:text-3xl font-bold text-slate-900">
+              Xóa WSL Auto &amp; Xóa Custom triệt để
+            </h2>
+            <p data-i18n="rem_desc" class="text-sm text-slate-600 max-w-2xl">
+              Gỡ sạch toàn bộ thành phần còn sót lại mà thao tác gỡ thông thường hay bỏ lỡ trên Windows.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+          <div class="p-4 rounded-2xl bg-white/75 border border-slate-200/80 shadow-sm space-y-1.5">
+            <div data-i18n="rem_i1_t" class="font-semibold text-slate-900">1. Unregister Distro &amp; .vhdx</div>
+            <p data-i18n="rem_i1_d" class="text-xs text-slate-600 leading-relaxed">Dừng WSL và hủy đăng ký mọi Distro để giải phóng ổ cứng ảo.</p>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-white/75 border border-slate-200/80 shadow-sm space-y-1.5">
+            <div data-i18n="rem_i2_t" class="font-semibold text-slate-900">2. Tắt Features (DISM)</div>
+            <p data-i18n="rem_i2_d" class="text-xs text-slate-600 leading-relaxed">Vô hiệu hóa Microsoft-Windows-Subsystem-Linux và VirtualMachinePlatform.</p>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-white/75 border border-slate-200/80 shadow-sm space-y-1.5">
+            <div data-i18n="rem_i3_t" class="font-semibold text-slate-900">3. Gỡ Appx / Store &amp; MSI</div>
+            <p data-i18n="rem_i3_d" class="text-xs text-slate-600 leading-relaxed">Gỡ gói Appx AllUsers, Provisioned Packages, winget và gói MSI qua msiexec.</p>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-white/75 border border-slate-200/80 shadow-sm space-y-1.5">
+            <div data-i18n="rem_i4_t" class="font-semibold text-slate-900">4. Kill Process &amp; Xóa Program Files</div>
+            <p data-i18n="rem_i4_d" class="text-xs text-slate-600 leading-relaxed">Dừng WSLService, wsl.exe, wslhost.exe và xóa thư mục C:\Program Files\WSL.</p>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-white/75 border border-slate-200/80 shadow-sm space-y-1.5">
+            <div data-i18n="rem_i5_t" class="font-semibold text-slate-900">5. Xóa Icon Linux Explorer (CLSID)</div>
+            <p data-i18n="rem_i5_d" class="text-xs text-slate-600 leading-relaxed">Dọn khóa Registry CLSID {B2B4A4D1-2754-4140-A2EB-9A76D9D7CDC6} và shortcut Start Menu.</p>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-white/75 border border-slate-200/80 shadow-sm space-y-1.5">
+            <div data-i18n="rem_i6_t" class="font-semibold text-slate-900">6. Restart Explorer &amp; SearchHost</div>
+            <p data-i18n="rem_i6_d" class="text-xs text-slate-600 leading-relaxed">Làm mới tiến trình tìm kiếm và File Explorer để biến mất biểu tượng cũ.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Step Walkthrough Preview -->
+    <section id="walkthrough" class="space-y-6 reveal">
+      <div class="text-center max-w-2xl mx-auto space-y-2">
+        <h2 data-i18n="walk_title" class="text-2xl sm:text-3xl font-bold text-slate-900">
+          Xem trước luồng hoạt động tương tác
+        </h2>
+        <p data-i18n="walk_desc" class="text-sm text-slate-600">
+          Chuyển đổi các kịch bản dưới đây để xem cách công cụ xử lý từ quyền Admin đến cài đặt và gỡ sạch.
+        </p>
+      </div>
+
+      <div class="liquid-glass p-6 sm:p-8 space-y-6">
+        <div class="flex flex-wrap gap-2">
+          <button type="button" data-scenario="admin" class="scenario-btn liquid-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition cursor-pointer">
+            1. Admin Check
+          </button>
+          <button type="button" data-scenario="install" class="scenario-btn liquid-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition cursor-pointer">
+            2. Auto / Custom Install
+          </button>
+          <button type="button" data-scenario="clean" class="scenario-btn liquid-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition cursor-pointer">
+            3. Auto / Custom Remove
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+          <div class="space-y-3">
+            <h3 id="scenarioHeading" class="text-xl font-bold text-blue-600"></h3>
+            <p id="scenarioBody" class="text-sm text-slate-600 leading-relaxed"></p>
+          </div>
+          <div class="rounded-2xl bg-slate-900 border border-slate-800 p-4 font-mono text-xs text-emerald-300 shadow-inner space-y-1.5 overflow-x-auto">
+            <div class="text-slate-400 pb-1 border-b border-white/10">Linux on Windows — Console Preview</div>
+            <pre id="scenarioTerminal" class="whitespace-pre-wrap leading-relaxed"></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer with Copyright & GitHub Link -->
+  <footer class="px-4 sm:px-6 pb-8">
+    <div class="max-w-6xl mx-auto liquid-glass rounded-2xl px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-sm text-slate-600">
+      <div class="font-medium">Copyright © 2026 minhduc290613. All rights reserved.</div>
+      <a
+        href="https://github.com/minhduc290613"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-500 font-semibold transition"
+      >
+        <span>github.com/minhduc290613</span>
+        <span aria-hidden="true">↗</span>
+      </a>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      const TRANSLATIONS = {
+        vn: {
+          nav_tagline: "WSL2 & Distro Manager",
+          nav_install: "Cài đặt",
+          nav_workflows: "Auto & Custom",
+          nav_removal: "Gỡ bỏ sạch",
+          nav_walkthrough: "Hướng dẫn",
+          hero_badge: "Tự động xin quyền Admin khi chạy ở PowerShell thường",
+          hero_subtitle: "Script PowerShell (.ps1) trực quan giúp cài đặt WSL2, chọn bản phân phối Linux, chạy từng bước có hướng dẫn hoặc gỡ bỏ triệt để chỉ qua lệnh iex.",
+          cmd_label: "Chạy trực tiếp qua PowerShell (iex)",
+          copy_btn: "Sao chép",
+          copied_toast: "Đã sao chép!",
+          cmd_note: "Nếu mở ở PowerShell thường (User), script tự động hỏi và nâng quyền Administrator trước khi thực thi.",
+          sec_workflows_title: "Cài đặt Auto & Custom linh hoạt",
+          sec_workflows_desc: "Chọn bản Distro mong muốn, cài nhanh một chạm hoặc đi từng bước rõ ràng với nhật ký trực tiếp.",
+          card_distro_title: "Chọn Distro & Tải Online",
+          card_distro_desc: "Hỗ trợ Ubuntu, Ubuntu-24.04, Ubuntu-22.04, Debian, Kali Linux, openSUSE hoặc tự nhập tên Distro bất kỳ và đồng bộ danh sách trực tuyến.",
+          card_auto_title: "Cài đặt Auto (1-Click)",
+          card_auto_desc: "Tự động bật Virtual Machine Platform & WSL, cập nhật kernel WSL2, đặt mặc định WSL 2 và cài đặt bản Distro đã chọn.",
+          card_custom_title: "Cài Custom từng bước",
+          card_custom_desc: "Chạy từng bước có hướng dẫn trực quan, dễ kiểm soát lỗi ảo hóa BIOS/UEFI hoặc lỗi mạng khi tải từng thành phần.",
+          rem_badge: "Deep Clean Engine",
+          rem_title: "Xóa WSL Auto & Xóa Custom triệt để",
+          rem_desc: "Gỡ sạch toàn bộ thành phần còn sót lại mà thao tác gỡ thông thường hay bỏ lỡ trên Windows.",
+          rem_i1_t: "1. Unregister Distro & .vhdx",
+          rem_i1_d: "Dừng WSL và hủy đăng ký mọi Distro để giải phóng ổ cứng ảo.",
+          rem_i2_t: "2. Tắt Features (DISM)",
+          rem_i2_d: "Vô hiệu hóa Microsoft-Windows-Subsystem-Linux và VirtualMachinePlatform.",
+          rem_i3_t: "3. Gỡ Appx / Store & MSI",
+          rem_i3_d: "Gỡ gói Appx AllUsers, Provisioned Packages, winget và gói MSI qua msiexec.",
+          rem_i4_t: "4. Kill Process & Xóa Program Files",
+          rem_i4_d: "Dừng WSLService, wsl.exe, wslhost.exe và xóa thư mục C:\\Program Files\\WSL.",
+          rem_i5_t: "5. Xóa Icon Linux Explorer (CLSID)",
+          rem_i5_d: "Dọn khóa Registry CLSID {B2B4A4D1-2754-4140-A2EB-9A76D9D7CDC6} và shortcut Start Menu.",
+          rem_i6_t: "6. Restart Explorer & SearchHost",
+          rem_i6_d: "Làm mới tiến trình tìm kiếm và File Explorer để biến mất biểu tượng cũ.",
+          walk_title: "Xem trước luồng hoạt động tương tác",
+          walk_desc: "Chuyển đổi các kịch bản dưới đây để xem cách công cụ xử lý từ quyền Admin đến cài đặt và gỡ sạch.",
+          scenarios: {
+            admin: {
+              heading: "Tự kiểm tra & hỏi nâng quyền Administrator",
+              body: "Khi chạy từ PowerShell người dùng thường (kể cả khi thực thi qua irm ... | iex), giao diện sẽ hỏi xác nhận và mở lại tiến trình với quyền Administrator để cấu hình hệ thống an toàn.",
+              code: "[INFO] Checking Administrator privilege...\n[PROMPT] Run as Administrator? (Yes / No)\n[ELEVATE] Relaunching elevated PowerShell...\n[READY] Administrator mode active."
+            },
+            install: {
+              heading: "Cài đặt Auto một chạm hoặc Custom từng bước",
+              body: "Chọn Distro như Ubuntu hoặc Debian, sau đó chạy Auto toàn bộ hoặc thực hiện từng bước: bật VirtualMachinePlatform, bật WSL, cập nhật kernel WSL2 và cài Distro.",
+              code: "[STEP 1] dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart\n[STEP 2] dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart\n[STEP 3] wsl --update && wsl --set-default-version 2\n[STEP 4] wsl --install -d Ubuntu"
+            },
+            clean: {
+              heading: "Xóa Auto toàn diện hoặc Xóa Custom từng mục",
+              body: "Tick chọn các hạng mục cần gỡ hoặc chạy Xóa Full WSL: hủy đăng ký distro, tắt feature, gỡ Appx/MSI, dừng tiến trình, xóa C:\\Program Files\\WSL, xóa CLSID Explorer và restart Explorer/SearchHost.",
+              code: "wsl --shutdown && wsl --unregister Ubuntu\ntaskkill /F /IM wslservice.exe /T\nRemove-Item 'C:\\Program Files\\WSL' -Recurse -Force\nRemove-Item 'HKCU:\\Software\\Classes\\CLSID\\{B2B4A4D1-2754-4140-A2EB-9A76D9D7CDC6}' -Recurse -Force\nStop-Process -Name SearchHost,explorer -Force"
+            }
+          }
+        },
+        en: {
+          nav_tagline: "WSL2 & Distro Manager",
+          nav_install: "Install",
+          nav_workflows: "Auto & Custom",
+          nav_removal: "Full Removal",
+          nav_walkthrough: "Walkthrough",
+          hero_badge: "Auto-prompts for Administrator when run in standard PowerShell",
+          hero_subtitle: "Visual PowerShell (.ps1) script to install WSL2, choose Linux distros, run guided step-by-step setup, or perform deep cleanup via iex.",
+          cmd_label: "Run directly via PowerShell (iex)",
+          copy_btn: "Copy",
+          copied_toast: "Copied!",
+          cmd_note: "If launched from a non-admin PowerShell window, the script asks to elevate to Administrator before running privileged tasks.",
+          sec_workflows_title: "Flexible Auto & Custom Installation",
+          sec_workflows_desc: "Pick your target distro, install in one click, or walk through each step with live console logs.",
+          card_distro_title: "Distro Selector & Online Sync",
+          card_distro_desc: "Includes Ubuntu, Ubuntu-24.04, Ubuntu-22.04, Debian, Kali Linux, openSUSE, custom distro names, and live online distro refresh.",
+          card_auto_title: "1-Click Auto Install",
+          card_auto_desc: "Enables Virtual Machine Platform & WSL, updates the WSL2 kernel, sets WSL 2 as default, and installs your chosen distro.",
+          card_custom_title: "Guided Step-by-Step Custom",
+          card_custom_desc: "Execute individual guided steps to easily diagnose BIOS/UEFI virtualization or network issues during setup.",
+          rem_badge: "Deep Clean Engine",
+          rem_title: "Auto & Custom Complete WSL Removal",
+          rem_desc: "Removes leftover services, folders, Explorer icons, and packages that standard uninstallers often leave behind.",
+          rem_i1_t: "1. Unregister Distros & .vhdx",
+          rem_i1_d: "Shuts down WSL and unregisters distributions to reclaim virtual disk space.",
+          rem_i2_t: "2. Disable Features (DISM)",
+          rem_i2_d: "Disables Microsoft-Windows-Subsystem-Linux and VirtualMachinePlatform.",
+          rem_i3_t: "3. Remove Appx / Store & MSI",
+          rem_i3_d: "Cleans AllUsers/Provisioned Appx packages, winget packages, and MSI entries via msiexec.",
+          rem_i4_t: "4. Kill Processes & Delete Program Files",
+          rem_i4_d: "Stops WSLService, wsl.exe, wslhost.exe and deletes C:\\Program Files\\WSL.",
+          rem_i5_t: "5. Remove Explorer Linux Icon (CLSID)",
+          rem_i5_d: "Cleans CLSID {B2B4A4D1-2754-4140-A2EB-9A76D9D7CDC6} registry keys and Start Menu shortcuts.",
+          rem_i6_t: "6. Restart Explorer & SearchHost",
+          rem_i6_d: "Restarts SearchHost and File Explorer so stale icons disappear immediately.",
+          walk_title: "Interactive Workflow Preview",
+          walk_desc: "Switch scenarios below to preview how the tool handles Admin elevation, installation, and full removal.",
+          scenarios: {
+            admin: {
+              heading: "Administrator Detection & Elevation Prompt",
+              body: "When started in a regular user PowerShell session (including via irm ... | iex), it prompts for confirmation and relaunches with Administrator privileges.",
+              code: "[INFO] Checking Administrator privilege...\n[PROMPT] Run as Administrator? (Yes / No)\n[ELEVATE] Relaunching elevated PowerShell...\n[READY] Administrator mode active."
+            },
+            install: {
+              heading: "One-Click Auto or Step-by-Step Custom Install",
+              body: "Select a distro like Ubuntu or Debian, then run Auto or step through VirtualMachinePlatform, WSL feature enablement, WSL2 update, and distro install.",
+              code: "[STEP 1] dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart\n[STEP 2] dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart\n[STEP 3] wsl --update && wsl --set-default-version 2\n[STEP 4] wsl --install -d Ubuntu"
+            },
+            clean: {
+              heading: "Full Auto Clean or Custom Selective Removal",
+              body: "Select specific cleanup tasks or run Full Remove: unregister distros, disable features, remove Appx/MSI, kill processes, delete C:\\Program Files\\WSL, remove Explorer CLSID, and restart Explorer/SearchHost.",
+              code: "wsl --shutdown && wsl --unregister Ubuntu\ntaskkill /F /IM wslservice.exe /T\nRemove-Item 'C:\\Program Files\\WSL' -Recurse -Force\nRemove-Item 'HKCU:\\Software\\Classes\\CLSID\\{B2B4A4D1-2754-4140-A2EB-9A76D9D7CDC6}' -Recurse -Force\nStop-Process -Name SearchHost,explorer -Force"
+            }
+          }
+        },
+        jp: {
+          nav_tagline: "WSL2 & ディストロ管理ツール",
+          nav_install: "インストール",
+          nav_workflows: "Auto & Custom",
+          nav_removal: "完全削除",
+          nav_walkthrough: "ガイド",
+          hero_badge: "一般ユーザー PowerShell 実行時に管理者権限を自動確認",
+          hero_subtitle: "iex コマンドで実行できる GUI 付き PowerShell (.ps1) ツール。WSL2 の導入、ディストロ選択、ステップ実行、完全削除に対応します。",
+          cmd_label: "PowerShell から直接実行 (iex)",
+          copy_btn: "コピー",
+          copied_toast: "コピーしました！",
+          cmd_note: "一般権限の PowerShell で起動した場合、管理者権限（Administrator）へ昇格するか確認ダイアログを表示します。",
+          sec_workflows_title: "柔軟な Auto & Custom インストール",
+          sec_workflows_desc: "ディストロを選んでワンクリック導入するか、ログを確認しながら1ステップずつ実行できます。",
+          card_distro_title: "ディストロ選択 & オンライン取得",
+          card_distro_desc: "Ubuntu、Ubuntu-24.04、Ubuntu-22.04、Debian、Kali Linux、openSUSE などに対応し、オンライン一覧の更新も可能です。",
+          card_auto_title: "ワンクリック Auto 導入",
+          card_auto_desc: "Virtual Machine Platform と WSL を有効化し、WSL2 カーネル更新・既定値設定・ディストロ導入を自動実行します。",
+          card_custom_title: "ガイド付きステップ実行 (Custom)",
+          card_custom_desc: "各工程を個別に実行できるため、BIOS/UEFI 仮想化設定や通信エラーの切り分けが簡単です。",
+          rem_badge: "Deep Clean Engine",
+          rem_title: "WSL の Auto / Custom 完全削除",
+          rem_desc: "通常のアンインストール後に残りやすいサービス、フォルダ、エクスプローラーのアイコンまで整理します。",
+          rem_i1_t: "1. ディストロ解除 & .vhdx 削除",
+          rem_i1_d: "WSL を停止して登録済みディストロを解除し、仮想ディスク領域を解放します。",
+          rem_i2_t: "2. Windows 機能の無効化 (DISM)",
+          rem_i2_d: "WSL および VirtualMachinePlatform 機能を無効化します。",
+          rem_i3_t: "3. Appx / Store / MSI 削除",
+          rem_i3_d: "AllUsers / Provisioned Appx、winget、MSI パッケージを削除します。",
+          rem_i4_t: "4. プロセス終了 & Program Files 削除",
+          rem_i4_d: "WSLService や wsl.exe を終了し、C:\\Program Files\\WSL を削除します。",
+          rem_i5_t: "5. エクスプローラー Linux アイコン削除",
+          rem_i5_d: "CLSID {B2B4A4D1-2754-4140-A2EB-9A76D9D7CDC6} とスタートメニューのショートカットを削除します。",
+          rem_i6_t: "6. Explorer & SearchHost 再起動",
+          rem_i6_d: "検索とエクスプローラーを再起動し、古い表示キャッシュを更新します。",
+          walk_title: "インタラクティブ動作プレビュー",
+          walk_desc: "シナリオを切り替えて、管理者昇格から導入・完全削除までの流れを確認できます。",
+          scenarios: {
+            admin: {
+              heading: "管理者権限チェックと昇格プロンプト",
+              body: "一般 PowerShell（irm ... | iex 含む）から起動すると確認ダイアログが表示され、管理者権限で再起動します。",
+              code: "[INFO] Checking Administrator privilege...\n[PROMPT] Run as Administrator? (Yes / No)\n[ELEVATE] Relaunching elevated PowerShell...\n[READY] Administrator mode active."
+            },
+            install: {
+              heading: "ワンクリック Auto またはステップ別 Custom 導入",
+              body: "Ubuntu や Debian を選択し、一括導入または各ステップ（仮想マシン基盤・WSL・WSL2更新・ディストロ導入）を実行します。",
+              code: "[STEP 1] dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart\n[STEP 2] dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart\n[STEP 3] wsl --update && wsl --set-default-version 2\n[STEP 4] wsl --install -d Ubuntu"
+            },
+            clean: {
+              heading: "Auto 一括削除または Custom 選択削除",
+              body: "必要な項目だけをチェックして削除するか、ディストロ解除・機能無効化・Appx/MSI削除・プロセス終了・フォルダ削除・CLSID削除・再起動を一括実行します。",
+              code: "wsl --shutdown && wsl --unregister Ubuntu\ntaskkill /F /IM wslservice.exe /T\nRemove-Item 'C:\\Program Files\\WSL' -Recurse -Force\nRemove-Item 'HKCU:\\Software\\Classes\\CLSID\\{B2B4A4D1-2754-4140-A2EB-9A76D9D7CDC6}' -Recurse -Force\nStop-Process -Name SearchHost,explorer -Force"
+            }
+          }
+        },
+        lo: {
+          nav_tagline: "ຕົວຈັດການ WSL2 ແລະ Distro",
+          nav_install: "ຕິດຕັ້ງ",
+          nav_workflows: "Auto & Custom",
+          nav_removal: "ລຶບອອກໝົດ",
+          nav_walkthrough: "ຄູ່ມື",
+          hero_badge: "ຖາມຂໍສິດ Administrator ອັດຕະໂນມັດເມື່ອເປີດ PowerShell ທຳມະດາ",
+          hero_subtitle: "ສະຄຣິບ PowerShell (.ps1) ແບບມີໜ້າຕາ ຊ່ວຍຕິດຕັ້ງ WSL2, ເລືອກ Distro Linux, ຕິດຕັ້ງເປັນຂັ້ນຕອນ ຫຼື ລຶບອອກໃຫ້ສະອາດຜ່ານຄຳສັ່ງ iex.",
+          cmd_label: "ລັນໂດຍກົງຜ່ານ PowerShell (iex)",
+          copy_btn: "ສຳເນົາ",
+          copied_toast: "ສຳເນົາແລ້ວ!",
+          cmd_note: "ຖ້າເປີດຢູ່ PowerShell ທຳມະດາ, ລະບົບຈະຖາມຢືນຢັນ ແລະ ຍົກລະດັບສິດ Administrator ກ່ອນດຳເນີນການ.",
+          sec_workflows_title: "ຕິດຕັ້ງແບບ Auto ແລະ Custom ຍືດຫຍຸ່ນ",
+          sec_workflows_desc: "ເລືອກ Distro ທີ່ຕ້ອງການ, ຕິດຕັ້ງຄລິກດຽວ ຫຼື ເຮັດເທື່ອລະຂັ້ນຕອນພ້ອມເບິ່ງ log ສົດ.",
+          card_distro_title: "ເລືອກ Distro & ດຶງລາຍຊື່ອອນລາຍ",
+          card_distro_desc: "ຮອງຮັບ Ubuntu, Ubuntu-24.04, Ubuntu-22.04, Debian, Kali Linux, openSUSE ຫຼື ພິມຊື່ Distro ເອງ ແລະ ອັບເດດລາຍຊື່ອອນລາຍໄດ້.",
+          card_auto_title: "ຕິດຕັ້ງ Auto (ຄລິກດຽວ)",
+          card_auto_desc: "ເປີດ Virtual Machine Platform & WSL, ອັບເດດ kernel WSL2, ຕັ້ງຄ່າເລີ່ມຕົ້ນເປັນ WSL 2 ແລະ ຕິດຕັ້ງ Distro ທີ່ເລືອກ.",
+          card_custom_title: "ຕິດຕັ້ງ Custom ເທື່ອລະຂັ້ນຕອນ",
+          card_custom_desc: "ສັ່ງເຮັດເທື່ອລະຂັ້ນຕອນພ້ອມຄຳແນະນຳ ຊ່ວຍກວດສອບບັນຫາ Virtualization ໃນ BIOS ຫຼື ເຄືອຂ່າຍໄດ້ງ່າຍ.",
+          rem_badge: "Deep Clean Engine",
+          rem_title: "ລຶບ WSL ແບບ Auto ແລະ Custom ໃຫ້ໝົດ",
+          rem_desc: "ລຶບສ່ວນທີ່ຄ້າງຄາຢູ່ Windows ອອກໃຫ້ໝົດ ລວມທັງໄອຄອນ Linux ໃນ Explorer.",
+          rem_i1_t: "1. ຍົກເລີກ Distro & .vhdx",
+          rem_i1_d: "ປິດ WSL ແລະ ຍົກເລີກການລົງທະບຽນ Distro ເພື່ອຄືນພື້ນທີ່ຮາດດິສຈຳລອງ.",
+          rem_i2_t: "2. ປິດ Features (DISM)",
+          rem_i2_d: "ປິດ Microsoft-Windows-Subsystem-Linux ແລະ VirtualMachinePlatform.",
+          rem_i3_t: "3. ລຶບ Appx / Store & MSI",
+          rem_i3_d: "ລຶບແພັກເກັດ Appx, winget ແລະ MSI ຜ່ານ msiexec.",
+          rem_i4_t: "4. ປິດ Process & ລຶບ Program Files",
+          rem_i4_d: "ຢຸດ WSLService, wsl.exe, wslhost.exe ແລະ ລຶບໂຟນເດີ C:\\Program Files\\WSL.",
+          rem_i5_t: "5. ລຶບໄອຄອນ Linux ໃນ Explorer",
+          rem_i5_d: "ລຶບ Registry CLSID {B2B4A4D1-2754-4140-A2EB-9A76D9D7CDC6} ແລະ ຊອດຄັດ Start Menu.",
+          rem_i6_t: "6. ຣີສະຕາດ Explorer & SearchHost",
+          rem_i6_d: "ໂຫຼດ SearchHost ແລະ File Explorer ໃໝ່ເພື່ອໃຫ້ໄອຄອນເກົ່າຫາຍໄປ.",
+          walk_title: "ເບິ່ງຕົວຢ່າງຂັ້ນຕອນການເຮັດວຽກ",
+          walk_desc: "ປ່ຽນຕົວຢ່າງດ້ານລຸ່ມເພື່ອເບິ່ງການຈັດການສິດ Admin, ການຕິດຕັ້ງ ແລະ ການລຶບອອກໝົດ.",
+          scenarios: {
+            admin: {
+              heading: "ກວດສອບ ແລະ ຂໍສິດ Administrator",
+              body: "ເມື່ອເປີດຈາກ PowerShell ທຳມະດາ (ລວມທັງ irm ... | iex), ລະບົບຈະຖາມຢືນຢັນ ແລະ ເປີດໃໝ່ດ້ວຍສິດ Administrator.",
+              code: "[INFO] Checking Administrator privilege...\n[PROMPT] Run as Administrator? (Yes / No)\n[ELEVATE] Relaunching elevated PowerShell...\n[READY] Administrator mode active."
+            },
+            install: {
+              heading: "ຕິດຕັ້ງ Auto ຄລິກດຽວ ຫຼື Custom ເທື່ອລະຂັ້ນຕອນ",
+              body: "ເລືອກ Distro ເຊັ່ນ Ubuntu ຫຼື Debian ແລ້ວສັ່ງ Auto ຫຼື ເຮັດເທື່ອລະຂັ້ນຕອນ: VirtualMachinePlatform, WSL, ອັບເດດ WSL2 ແລະ ຕິດຕັ້ງ Distro.",
+              code: "[STEP 1] dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart\n[STEP 2] dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart\n[STEP 3] wsl --update && wsl --set-default-version 2\n[STEP 4] wsl --install -d Ubuntu"
+            },
+            clean: {
+              heading: "ລຶບ Auto ທັງໝົດ ຫຼື ລຶບ Custom ຕາມຫົວຂໍ້",
+              body: "ເລືອກລຶບສະເພາະຫົວຂໍ້ ຫຼື ລຶບທັງໝົດ: ຍົກເລີກ distro, ປິດ feature, ລຶບ Appx/MSI, ປິດ process, ລຶບ C:\\Program Files\\WSL, ລຶບ CLSID ແລະ ຣີສະຕາດ Explorer.",
+              code: "wsl --shutdown && wsl --unregister Ubuntu\ntaskkill /F /IM wslservice.exe /T\nRemove-Item 'C:\\Program Files\\WSL' -Recurse -Force\nRemove-Item 'HKCU:\\Software\\Classes\\CLSID\\{B2B4A4D1-2754-4140-A2EB-9A76D9D7CDC6}' -Recurse -Force\nStop-Process -Name SearchHost,explorer -Force"
+            }
+          }
+        }
+      };
+
+      let currentLang = "vn";
+      let currentScenario = "admin";
+
+      const langButtons = document.querySelectorAll(".lang-btn");
+      const scenarioButtons = document.querySelectorAll(".scenario-btn");
+      const copyBtn = document.getElementById("copyCmdBtn");
+      const copyFeedback = document.getElementById("copyFeedback");
+      const iexCommandText = document.getElementById("iexCommandText");
+
+      function updateLangButtons() {
+        langButtons.forEach((btn) => {
+          const active = btn.dataset.lang === currentLang;
+          btn.className =
+            "lang-btn px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer " +
+            (active
+              ? "bg-white text-blue-600 border border-slate-200/90 shadow-sm"
+              : "text-slate-600 hover:text-slate-900 border border-transparent");
+        });
+      }
+
+      function updateScenarioButtons() {
+        scenarioButtons.forEach((btn) => {
+          const active = btn.dataset.scenario === currentScenario;
+          btn.className =
+            "scenario-btn liquid-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition cursor-pointer " +
+            (active
+              ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-500 shadow-sm"
+              : "bg-white/70 text-slate-700 hover:bg-white border-slate-200/90");
+        });
+      }
+
+      function renderScenario() {
+        const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.vn;
+        const sc = dict.scenarios[currentScenario] || dict.scenarios.admin;
+        document.getElementById("scenarioHeading").textContent = sc.heading;
+        document.getElementById("scenarioBody").textContent = sc.body;
+        document.getElementById("scenarioTerminal").textContent = sc.code;
+        updateScenarioButtons();
+      }
+
+      function applyLanguage(lang) {
+        currentLang = TRANSLATIONS[lang] ? lang : "vn";
+        const dict = TRANSLATIONS[currentLang];
+
+        if (currentLang === "jp") {
+          document.documentElement.lang = "ja";
+        } else if (currentLang === "lo") {
+          document.documentElement.lang = "lo";
+        } else if (currentLang === "en") {
+          document.documentElement.lang = "en";
+        } else {
+          document.documentElement.lang = "vi";
+        }
+
+        document.querySelectorAll("[data-i18n]").forEach((el) => {
+          const key = el.getAttribute("data-i18n");
+          if (dict[key]) {
+            el.textContent = dict[key];
+          }
+        });
+
+        copyFeedback.textContent = dict.copied_toast;
+        updateLangButtons();
+        renderScenario();
+      }
+
+      langButtons.forEach((btn) => {
+        btn.addEventListener("click", () => applyLanguage(btn.dataset.lang));
+      });
+
+      scenarioButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          currentScenario = btn.dataset.scenario;
+          renderScenario();
+        });
+      });
+
+      copyBtn.addEventListener("click", () => {
+        const cmd = iexCommandText.textContent.trim();
+        let copied = false;
+
+        try {
+          const textarea = document.createElement("textarea");
+          textarea.value = cmd;
+          textarea.setAttribute("readonly", "");
+          textarea.style.position = "fixed";
+          textarea.style.opacity = "0";
+          document.body.appendChild(textarea);
+          textarea.select();
+          copied = document.execCommand("copy");
+          document.body.removeChild(textarea);
+        } catch {
+          copied = false;
+        }
+
+        if (!copied && navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(cmd).catch(() => {});
+        }
+
+        copyFeedback.classList.remove("opacity-0");
+        copyFeedback.classList.add("opacity-100");
+        setTimeout(() => {
+          copyFeedback.classList.remove("opacity-100");
+          copyFeedback.classList.add("opacity-0");
+        }, 1600);
+      });
+
+      // Intersection Observer for Smooth Scroll Reveals
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("is-visible");
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.12 }
+      );
+
+      document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
+
+      // Initialize default language
+      applyLanguage("vn");
+    })();
+  </script>
+</body>
+</html>
