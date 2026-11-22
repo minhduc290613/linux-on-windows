@@ -51,17 +51,29 @@ function Load-LocaleJson {
         }
     }
 
-    # 2. Download from domain (when running through irm ... | iex)
+    # 2. Download locales when the script is piped to PowerShell through irm ... | iex.
+    # Try the configured hosting URL first, then GitHub as a reliable fallback.
+    $localeSources = @()
     if (-not [string]::IsNullOrWhiteSpace($LocalesBaseUrl)) {
+        $localeSources += $LocalesBaseUrl.TrimEnd("/")
+    }
+    $localeSources += "https://raw.githubusercontent.com/minhduc290613/linux-on-windows/main/locales"
+
+    foreach ($baseUrl in ($localeSources | Select-Object -Unique)) {
         try {
-            $cleanBase = $LocalesBaseUrl.TrimEnd("/")
-            $obj = Invoke-RestMethod -Uri "$cleanBase/$lower.json" -TimeoutSec 5 -ErrorAction Stop
-            foreach ($p in $obj.PSObject.Properties) {
-                $map[$p.Name] = [string]$p.Value
+            $obj = Invoke-RestMethod -Uri "$baseUrl/$lower.json" -TimeoutSec 8 -ErrorAction Stop
+            if ($null -ne $obj -and $obj.PSObject.Properties.Count -gt 0) {
+                foreach ($property in $obj.PSObject.Properties) {
+                    $map[$property.Name] = [string]$property.Value
+                }
+                if ($map.Count -gt 0) {
+                    return $map
+                }
             }
         }
         catch {
-            # Ignore if the remote file cannot be downloaded
+            # Continue to the next locale source. T() will use Vietnamese fallback
+            # for any key that is unavailable in the selected language.
         }
     }
 
