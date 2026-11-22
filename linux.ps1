@@ -51,17 +51,21 @@ function Load-LocaleJson {
         }
     }
 
-    # 2. Download locales when the script is piped to PowerShell through irm ... | iex.
-    # Try the configured hosting URL first, then GitHub as a reliable fallback.
-    $localeSources = @()
+    # 2. Download locales for irm ... | iex runs (where $PSScriptRoot is empty).
+    # GitHub Raw is the canonical UTF-8 source; decode bytes explicitly because
+    # Windows PowerShell 5.1 can misread JSON when a host omits its charset header.
+    $localeSources = @(
+        "https://raw.githubusercontent.com/minhduc290613/linux-on-windows/main/locales"
+    )
     if (-not [string]::IsNullOrWhiteSpace($LocalesBaseUrl)) {
         $localeSources += $LocalesBaseUrl.TrimEnd("/")
     }
-    $localeSources += "https://raw.githubusercontent.com/minhduc290613/linux-on-windows/main/locales"
 
     foreach ($baseUrl in ($localeSources | Select-Object -Unique)) {
         try {
-            $obj = Invoke-RestMethod -Uri "$baseUrl/$lower.json" -TimeoutSec 8 -ErrorAction Stop
+            $response = Invoke-WebRequest -Uri "$baseUrl/$lower.json" -UseBasicParsing -TimeoutSec 12 -ErrorAction Stop
+            $jsonText = [System.Text.Encoding]::UTF8.GetString($response.RawContentStream.ToArray())
+            $obj = $jsonText | ConvertFrom-Json -ErrorAction Stop
             if ($null -ne $obj -and $obj.PSObject.Properties.Count -gt 0) {
                 foreach ($property in $obj.PSObject.Properties) {
                     $map[$property.Name] = [string]$property.Value
@@ -72,8 +76,7 @@ function Load-LocaleJson {
             }
         }
         catch {
-            # Continue to the next locale source. T() will use Vietnamese fallback
-            # for any key that is unavailable in the selected language.
+            # Try the next source. Missing keys use the Vietnamese fallback.
         }
     }
 
@@ -106,9 +109,15 @@ function T {
         return $Key
     }
     if ($Args.Count -gt 0) {
-        return ($val -f $Args)
+        # Pass formatting arguments as a real object[] so {0}, {1}, etc.
+        # are expanded consistently in Windows PowerShell 5.1 and PowerShell 7.
+        return [string]::Format(
+            [System.Globalization.CultureInfo]::InvariantCulture,
+            [string]$val,
+            [object[]]@($Args)
+        )
     }
-    return $val
+    return [string]$val
 }
 
 
