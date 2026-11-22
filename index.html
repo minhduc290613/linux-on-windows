@@ -520,7 +520,14 @@
         }
       };
 
-      let currentLang = "vn";
+      let currentLang = (() => {
+        try {
+          const saved = localStorage.getItem("linux-on-windows-language");
+          return TRANSLATIONS[saved] ? saved : "vn";
+        } catch {
+          return "vn";
+        }
+      })();
       let currentScenario = "admin";
 
       const langButtons = document.querySelectorAll(".lang-btn");
@@ -537,6 +544,7 @@
             (active
               ? "bg-white text-blue-600 border border-slate-200/90 shadow-sm"
               : "text-slate-600 hover:text-slate-900 border border-transparent");
+          btn.setAttribute("aria-pressed", String(active));
         });
       }
 
@@ -564,6 +572,14 @@
         currentLang = TRANSLATIONS[lang] ? lang : "vn";
         const dict = TRANSLATIONS[currentLang];
 
+        // Remember the visitor's choice without preventing the page from working
+        // when browser storage is disabled (for example, in private contexts).
+        try {
+          localStorage.setItem("linux-on-windows-language", currentLang);
+        } catch {
+          // Storage is optional; the language switch still works for this session.
+        }
+
         if (currentLang === "jp") {
           document.documentElement.lang = "ja";
         } else if (currentLang === "lo") {
@@ -576,8 +592,9 @@
 
         document.querySelectorAll("[data-i18n]").forEach((el) => {
           const key = el.getAttribute("data-i18n");
-          if (dict[key]) {
-            el.textContent = dict[key];
+          const translated = dict[key] ?? TRANSLATIONS.vn[key];
+          if (typeof translated === "string") {
+            el.textContent = translated;
           }
         });
 
